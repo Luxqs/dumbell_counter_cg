@@ -166,6 +166,8 @@ input.stepper-value::-webkit-inner-spin-button { -webkit-appearance: none; margi
 .preset-row { display: flex; gap: 8px; margin-bottom: 12px; }
 .preset-row input { flex: 1; }
 .single-exercise-actions { display: flex; flex-direction: column; gap: 10px; margin-top: 14px; }
+.single-exercise-sub-actions { display: flex; gap: 8px; }
+.single-exercise-sub-actions .btn { flex: 1; min-width: 0; white-space: normal; }
 .my-plan-row {
   display: flex;
   gap: 8px;
@@ -698,6 +700,9 @@ input.stepper-value::-webkit-inner-spin-button { -webkit-appearance: none; margi
   .single-exercise-actions {
     flex-direction: column;
   }
+  .single-exercise-sub-actions {
+    flex-direction: column;
+  }
   .my-plan-row {
     flex-direction: column;
   }
@@ -723,13 +728,7 @@ input.stepper-value::-webkit-inner-spin-button { -webkit-appearance: none; margi
     gap: 28px;
   }
   .setup-col { flex: 1; min-width: 0; }
-  .single-exercise-actions {
-    flex-direction: row;
-  }
-  .single-exercise-actions .btn {
-    flex: 1;
-    width: auto;
-  }
+  .single-exercise-actions .btn { width: 100%; }
 
   /* Workout: camera left, stats right */
   #screen-workout { padding: 16px 40px 32px; }

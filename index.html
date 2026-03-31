@@ -91,8 +91,10 @@
             </div>
             <div class="single-exercise-actions">
               <button class="btn btn-primary" id="btn-start">▶ Start Single Exercise</button>
-              <button class="btn btn-accent" id="btn-save-preset">💾 Save Single Exercise</button>
-              <button class="btn btn-secondary" id="btn-add-to-plan">+ Add to Workout Plan</button>
+              <div class="single-exercise-sub-actions">
+                <button class="btn btn-accent" id="btn-save-preset">💾 Update Single Exercise</button>
+                <button class="btn btn-secondary" id="btn-add-to-plan">+ Add to Workout Plan</button>
+              </div>
             </div>
           </div>
         </div><!-- /setup-col left -->
@@ -113,8 +115,8 @@
             <div class="my-plan-row">
               <select id="plan-select" title="My plan"></select>
               <button class="btn btn-secondary" id="btn-load-plan">Load My Plan</button>
-              <button class="btn btn-danger" id="btn-delete-plan">Delete My Plan</button>
             </div>
+            <button class="btn btn-danger" id="btn-delete-plan" style="width:100%; margin-bottom:12px;">Delete My Plan</button>
 
             <div id="plan-list" class="plan-list"></div>
             <div style="margin-top:12px;">
