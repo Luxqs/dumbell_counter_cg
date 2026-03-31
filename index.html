@@ -15,7 +15,7 @@
     <div class="modal-box">
       <div class="modal-icon">👤</div>
       <h2 class="modal-title">Who's working out?</h2>
-      <p class="modal-sub">Profiles keep your plans &amp; presets separate. Data is stored locally in your browser — it survives cookie deletion.</p>
+      <p class="modal-sub">Profiles keep your plans and presets separate. Data is stored locally in your browser and remains available across sessions.</p>
       <div id="profile-list" class="profile-list"></div>
       <div class="profile-new-row">
         <input type="text" id="profile-name-input" placeholder="New profile name…" maxlength="30" />
@@ -42,20 +42,15 @@
       </div>
 
       <div class="setup-cols">
-
-        <!-- ── Left column ────────────────────────────────────────────────── -->
+        <!-- ── Left column: Single Exercise ─────────────────────────────── -->
         <div class="setup-col">
-
-          <!-- Exercise selection -->
-          <div class="card">
-            <h3 class="card-title">Exercise</h3>
-            <select id="exercise-select"></select>
-            <div class="tips-box" id="exercise-tips"></div>
-          </div>
-
-          <!-- Single Exercise -->
           <div class="card">
             <h3 class="card-title">Single Exercise</h3>
+            <label class="field-label" for="exercise-select">Exercise</label>
+            <select id="exercise-select"></select>
+            <label class="field-label" for="preset-select" style="margin-top:10px;">Saved Single Exercise</label>
+            <select id="preset-select"></select>
+            <div class="tips-box" id="exercise-tips"></div>
             <div class="steppers">
               <div class="stepper">
                 <label>Sets</label>
@@ -96,15 +91,14 @@
             </div>
             <div class="single-exercise-actions">
               <button class="btn btn-primary" id="btn-start">▶ Start Single Exercise</button>
-              <div class="single-exercise-save-row">
-                <select id="preset-select"></select>
-                <button class="btn btn-accent" id="btn-save-preset">💾 Save Single Exercise</button>
-              </div>
+              <button class="btn btn-accent" id="btn-save-preset">💾 Save Single Exercise</button>
               <button class="btn btn-secondary" id="btn-add-to-plan">+ Add to Workout Plan</button>
             </div>
           </div>
+        </div><!-- /setup-col left -->
 
-          <!-- Workout Plan -->
+        <!-- ── Right column: Workout Plan ──────────────────────────────── -->
+        <div class="setup-col">
           <div class="card">
             <h3 class="card-title">Workout Plan</h3>
 
@@ -115,17 +109,18 @@
               </select>
               <button class="btn btn-secondary" id="btn-load-preset-plan" style="flex-shrink:0;">Load Template</button>
             </div>
+            <label class="field-label" for="plan-select">My Plan</label>
+            <div class="my-plan-row">
+              <select id="plan-select" title="My plan"></select>
+              <button class="btn btn-secondary" id="btn-load-plan">Load My Plan</button>
+              <button class="btn btn-danger" id="btn-delete-plan">Delete My Plan</button>
+            </div>
 
             <div id="plan-list" class="plan-list"></div>
             <div style="margin-top:12px;">
               <div class="preset-row" style="margin-bottom:8px;">
                 <input type="text" id="plan-name" placeholder="New plan name…" maxlength="40" />
                 <button class="btn btn-accent" id="btn-save-plan">Save Workout Plan</button>
-              </div>
-              <select id="plan-select" style="margin-bottom:8px;" title="My plan"></select>
-              <div style="display:flex; gap:8px;">
-                <button class="btn btn-secondary" id="btn-load-plan" style="flex:1;">Load Workout Plan</button>
-                <button class="btn btn-danger" id="btn-delete-plan" style="flex:1;">Delete Workout Plan</button>
               </div>
             </div>
             <button class="btn btn-primary" id="btn-start-plan" style="display:none; margin-top:12px;">▶ Start Workout Plan</button>

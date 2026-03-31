@@ -150,7 +150,9 @@ class App {
   _populateExercises() {
     const sel = this.setup.exerciseSelect;
     sel.innerHTML = '';
-    EXERCISES.forEach(ex => {
+    [...EXERCISES]
+      .sort((a, b) => a.name.localeCompare(b.name))
+      .forEach(ex => {
       const opt = document.createElement('option');
       opt.value = ex.id;
       opt.textContent = ex.name;
@@ -162,7 +164,7 @@ class App {
   _populatePresets() {
     const sel = this.setup.presetSelect;
     const names = this.wm.list();
-    sel.innerHTML = '<option value="">— Saved single exercise (optional) —</option>';
+    sel.innerHTML = '<option value="">— Select saved single exercise —</option>';
     names.forEach(n => {
       const opt = document.createElement('option');
       opt.value = n;
@@ -174,7 +176,7 @@ class App {
   _populatePlanSelect() {
     const sel = this.setup.planSelect;
     const names = this.wpm.list();
-    sel.innerHTML = '<option value="">— My plan —</option>';
+    sel.innerHTML = '<option value="">— Select My Plan —</option>';
     names.forEach(n => {
       const opt = document.createElement('option');
       opt.value = n;
@@ -204,7 +206,7 @@ class App {
     list.innerHTML = '';
 
     if (this.workoutPlan.length === 0) {
-      list.innerHTML = '<p class="plan-empty">No exercises added yet. Configure above and click "+ Add".</p>';
+      list.innerHTML = '<p class="plan-empty">No exercises added yet. Configure a single exercise and click “+ Add to Workout Plan”.</p>';
       this.setup.btnStartPlan.style.display = 'none';
       return;
     }

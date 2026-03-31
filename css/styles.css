@@ -89,6 +89,14 @@ select, input[type="text"] {
   outline: none;
   transition: border-color .2s;
 }
+.field-label {
+  display: block;
+  font-size: .76rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  margin-bottom: 6px;
+}
 select {
   appearance: none;
   -webkit-appearance: none;
@@ -158,8 +166,13 @@ input.stepper-value::-webkit-inner-spin-button { -webkit-appearance: none; margi
 .preset-row { display: flex; gap: 8px; margin-bottom: 12px; }
 .preset-row input { flex: 1; }
 .single-exercise-actions { display: flex; flex-direction: column; gap: 10px; margin-top: 14px; }
-.single-exercise-save-row { display: flex; gap: 8px; align-items: stretch; }
-.single-exercise-save-row select { flex: 1; }
+.my-plan-row {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+  margin-bottom: 12px;
+}
+.my-plan-row select { flex: 1; }
 
 /* ── Buttons ─────────────────────────────────────────────────────────────── */
 .btn {
@@ -682,7 +695,10 @@ input.stepper-value::-webkit-inner-spin-button { -webkit-appearance: none; margi
     flex-direction: column;
     gap: 12px;
   }
-  .single-exercise-save-row {
+  .single-exercise-actions {
+    flex-direction: column;
+  }
+  .my-plan-row {
     flex-direction: column;
   }
 }
@@ -707,6 +723,13 @@ input.stepper-value::-webkit-inner-spin-button { -webkit-appearance: none; margi
     gap: 28px;
   }
   .setup-col { flex: 1; min-width: 0; }
+  .single-exercise-actions {
+    flex-direction: row;
+  }
+  .single-exercise-actions .btn {
+    flex: 1;
+    width: auto;
+  }
 
   /* Workout: camera left, stats right */
   #screen-workout { padding: 16px 40px 32px; }
