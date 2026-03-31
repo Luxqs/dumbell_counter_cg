@@ -6,6 +6,7 @@ class App {
     this.profiles = new ProfileManager();
     this.wm = new WorkoutManager();
     this.wpm = new WorkoutPlanManager();
+    this.cloud = new CloudSyncManager();
 
     // Single exercise config
     this.exerciseId = EXERCISES[0].id;
@@ -76,11 +77,9 @@ class App {
       restExercisesInput: $('rest-exercises-input'),
       btnRestExercisesMinus: $('btn-rest-exercises-minus'),
       btnRestExercisesPlus: $('btn-rest-exercises-plus'),
-      // Presets
-      presetName: $('preset-name'),
+      // Single exercise saves
       btnSavePreset: $('btn-save-preset'),
       presetSelect: $('preset-select'),
-      btnDeletePreset: $('btn-delete-preset'),
       exerciseTips: $('exercise-tips'),
       btnStart: $('btn-start'),
       // Plan
@@ -163,20 +162,19 @@ class App {
   _populatePresets() {
     const sel = this.setup.presetSelect;
     const names = this.wm.list();
-    sel.innerHTML = '<option value="">— Load preset —</option>';
+    sel.innerHTML = '<option value="">— Saved single exercise (optional) —</option>';
     names.forEach(n => {
       const opt = document.createElement('option');
       opt.value = n;
       opt.textContent = n;
       sel.appendChild(opt);
     });
-    this.setup.btnDeletePreset.disabled = names.length === 0;
   }
 
   _populatePlanSelect() {
     const sel = this.setup.planSelect;
     const names = this.wpm.list();
-    sel.innerHTML = '<option value="">— Load saved plan —</option>';
+    sel.innerHTML = '<option value="">— My plan —</option>';
     names.forEach(n => {
       const opt = document.createElement('option');
       opt.value = n;
@@ -359,11 +357,13 @@ class App {
       const ns = this.profiles.namespace(active);
       this.wm.setNamespace(ns);
       this.wpm.setNamespace(ns);
+      this.cloud.setNamespace(ns);
       this.profileIndicator.textContent = `👤 ${active}`;
       this.btnSwitchProfile.style.display = '';
     } else {
       this.wm.setNamespace('');
       this.wpm.setNamespace('');
+      this.cloud.setNamespace('');
       this.profileIndicator.textContent = '';
       this.btnSwitchProfile.style.display = '';
     }
@@ -434,19 +434,23 @@ class App {
       s.restExercisesInput.value = this.restBetweenExercises;
     });
 
-    // Presets
+    // Save / load single exercise
     s.btnSavePreset.addEventListener('click', () => {
-      const name = s.presetName.value.trim();
-      if (!name) { s.presetName.focus(); return; }
+      const ex = EXERCISES.find(e => e.id === s.exerciseSelect.value);
+      const selectedName = s.presetSelect.value;
+      const generatedName = `${ex?.name || 'Exercise'} (${this.targetSets}x${this.targetReps})`;
+      const name = selectedName || generatedName;
       this.wm.save(name, {
         exerciseId: s.exerciseSelect.value,
         sets: this.targetSets,
         reps: this.targetReps,
         restBetweenSets: this.restBetweenSets,
+        restBetweenExercises: this.restBetweenExercises,
       });
+      this.cloud.saveSingleExercise(name, this.wm.get(name));
       this._populatePresets();
-      s.presetName.value = '';
-      this._toast('Preset saved!');
+      s.presetSelect.value = name;
+      this._toast(selectedName ? 'Single exercise updated!' : 'Single exercise saved!');
     });
 
     s.presetSelect.addEventListener('change', () => {
@@ -456,18 +460,12 @@ class App {
       this.targetSets = preset.sets;
       this.targetReps = preset.reps;
       this.restBetweenSets = preset.restBetweenSets ?? DEFAULT_REST_BETWEEN_SETS;
+      this.restBetweenExercises = preset.restBetweenExercises ?? this.restBetweenExercises;
       s.setsDisplay.value = this.targetSets;
       s.repsDisplay.value = this.targetReps;
       s.restSetsInput.value = this.restBetweenSets;
+      s.restExercisesInput.value = this.restBetweenExercises;
       this._updateTips();
-    });
-
-    s.btnDeletePreset.addEventListener('click', () => {
-      const name = s.presetSelect.value;
-      if (!name) return;
-      this.wm.delete(name);
-      this._populatePresets();
-      this._toast('Preset deleted');
     });
 
     // Preset plan templates
@@ -499,6 +497,7 @@ class App {
       if (!name) { s.planName.focus(); return; }
       if (this.workoutPlan.length === 0) { this._toast('Plan is empty!'); return; }
       this.wpm.save(name, this.workoutPlan);
+      this.cloud.saveWorkoutPlan(name, this.workoutPlan);
       this._populatePlanSelect();
       s.planName.value = '';
       this._toast('Plan saved!');
