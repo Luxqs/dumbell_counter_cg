@@ -53,9 +53,9 @@
             <div class="tips-box" id="exercise-tips"></div>
           </div>
 
-          <!-- Sets & Reps -->
+          <!-- Single Exercise -->
           <div class="card">
-            <h3 class="card-title">Workout Goal</h3>
+            <h3 class="card-title">Single Exercise</h3>
             <div class="steppers">
               <div class="stepper">
                 <label>Sets</label>
@@ -74,11 +74,6 @@
                 </div>
               </div>
             </div>
-          </div>
-
-          <!-- Rest Times -->
-          <div class="card">
-            <h3 class="card-title">Rest Times</h3>
             <div class="steppers">
               <div class="stepper">
                 <label>Between Sets</label>
@@ -99,25 +94,13 @@
                 <div class="rest-time-hint">0 – 300 s (max 5 min)</div>
               </div>
             </div>
-          </div>
-
-          <button class="btn btn-primary" id="btn-start">▶ Start Single Exercise</button>
-
-        </div><!-- /setup-col left -->
-
-        <!-- ── Right column ───────────────────────────────────────────────── -->
-        <div class="setup-col">
-
-          <!-- Presets -->
-          <div class="card">
-            <h3 class="card-title">Presets</h3>
-            <div style="margin-bottom:10px;">
-              <select id="preset-select" style="margin-bottom:8px;"></select>
-              <button class="btn btn-danger" id="btn-delete-preset" style="width:100%;">Delete selected preset</button>
-            </div>
-            <div class="preset-row">
-              <input type="text" id="preset-name" placeholder="Name this preset…" maxlength="40" />
-              <button class="btn btn-accent" id="btn-save-preset">💾 Save</button>
+            <div class="single-exercise-actions">
+              <button class="btn btn-primary" id="btn-start">▶ Start Single Exercise</button>
+              <div class="single-exercise-save-row">
+                <select id="preset-select"></select>
+                <button class="btn btn-accent" id="btn-save-preset">💾 Save Single Exercise</button>
+              </div>
+              <button class="btn btn-secondary" id="btn-add-to-plan">+ Add to Workout Plan</button>
             </div>
           </div>
 
@@ -125,31 +108,30 @@
           <div class="card">
             <h3 class="card-title">Workout Plan</h3>
 
-            <!-- Preset plan templates -->
+            <!-- Template plan -->
             <div class="plan-templates-row">
               <select id="preset-plan-select">
                 <option value="">— Load a template plan —</option>
               </select>
-              <button class="btn btn-secondary" id="btn-load-preset-plan" style="flex-shrink:0;">Load</button>
+              <button class="btn btn-secondary" id="btn-load-preset-plan" style="flex-shrink:0;">Load Template</button>
             </div>
 
-            <button class="btn btn-accent" id="btn-add-to-plan" style="width:100%; margin-bottom:12px;">+ Add Current Exercise to Plan</button>
             <div id="plan-list" class="plan-list"></div>
             <div style="margin-top:12px;">
               <div class="preset-row" style="margin-bottom:8px;">
-                <input type="text" id="plan-name" placeholder="Plan name…" maxlength="40" />
-                <button class="btn btn-accent" id="btn-save-plan">💾</button>
+                <input type="text" id="plan-name" placeholder="New plan name…" maxlength="40" />
+                <button class="btn btn-accent" id="btn-save-plan">Save Workout Plan</button>
               </div>
-              <select id="plan-select" style="margin-bottom:8px;"></select>
+              <select id="plan-select" style="margin-bottom:8px;" title="My plan"></select>
               <div style="display:flex; gap:8px;">
-                <button class="btn btn-secondary" id="btn-load-plan" style="flex:1;">Load Plan</button>
-                <button class="btn btn-danger" id="btn-delete-plan" style="flex:1;">Delete Plan</button>
+                <button class="btn btn-secondary" id="btn-load-plan" style="flex:1;">Load Workout Plan</button>
+                <button class="btn btn-danger" id="btn-delete-plan" style="flex:1;">Delete Workout Plan</button>
               </div>
             </div>
-            <button class="btn btn-primary" id="btn-start-plan" style="display:none; margin-top:12px;">▶ Start Plan Workout</button>
+            <button class="btn btn-primary" id="btn-start-plan" style="display:none; margin-top:12px;">▶ Start Workout Plan</button>
           </div>
 
-        </div><!-- /setup-col right -->
+        </div><!-- /setup-col left -->
 
       </div><!-- /setup-cols -->
 
