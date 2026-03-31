@@ -6,6 +6,7 @@ class App {
     this.profiles = new ProfileManager();
     this.wm = new WorkoutManager();
     this.wpm = new WorkoutPlanManager();
+    this.cloud = new CloudSyncManager();
 
     // Single exercise config
     this.exerciseId = EXERCISES[0].id;
@@ -76,11 +77,8 @@ class App {
       restExercisesInput: $('rest-exercises-input'),
       btnRestExercisesMinus: $('btn-rest-exercises-minus'),
       btnRestExercisesPlus: $('btn-rest-exercises-plus'),
-      // Presets
-      presetName: $('preset-name'),
+      // Single exercise saves
       btnSavePreset: $('btn-save-preset'),
-      presetSelect: $('preset-select'),
-      btnDeletePreset: $('btn-delete-preset'),
       exerciseTips: $('exercise-tips'),
       btnStart: $('btn-start'),
       // Plan
@@ -150,33 +148,27 @@ class App {
 
   _populateExercises() {
     const sel = this.setup.exerciseSelect;
+    const current = sel.value || this.exerciseId;
     sel.innerHTML = '';
-    EXERCISES.forEach(ex => {
-      const opt = document.createElement('option');
-      opt.value = ex.id;
-      opt.textContent = ex.name;
-      sel.appendChild(opt);
-    });
+    [...EXERCISES]
+      .sort((a, b) => a.name.localeCompare(b.name))
+      .forEach(ex => {
+        const saved = this.wm.get(ex.id);
+        const opt = document.createElement('option');
+        opt.value = ex.id;
+        opt.textContent = saved ? `${ex.name} • saved` : ex.name;
+        sel.appendChild(opt);
+      });
+    sel.value = current || EXERCISES[0].id;
+    this.exerciseId = sel.value;
+    this._loadSelectedExerciseSettings();
     this._updateTips();
-  }
-
-  _populatePresets() {
-    const sel = this.setup.presetSelect;
-    const names = this.wm.list();
-    sel.innerHTML = '<option value="">— Load preset —</option>';
-    names.forEach(n => {
-      const opt = document.createElement('option');
-      opt.value = n;
-      opt.textContent = n;
-      sel.appendChild(opt);
-    });
-    this.setup.btnDeletePreset.disabled = names.length === 0;
   }
 
   _populatePlanSelect() {
     const sel = this.setup.planSelect;
     const names = this.wpm.list();
-    sel.innerHTML = '<option value="">— Load saved plan —</option>';
+    sel.innerHTML = '<option value="">— Select My Plan —</option>';
     names.forEach(n => {
       const opt = document.createElement('option');
       opt.value = n;
@@ -201,12 +193,25 @@ class App {
     this.setup.exerciseTips.textContent = ex ? ex.tips : '';
   }
 
+  _loadSelectedExerciseSettings() {
+    const saved = this.wm.get(this.setup.exerciseSelect.value);
+    if (!saved) return;
+    this.targetSets = saved.sets;
+    this.targetReps = saved.reps;
+    this.restBetweenSets = saved.restBetweenSets ?? DEFAULT_REST_BETWEEN_SETS;
+    this.restBetweenExercises = saved.restBetweenExercises ?? this.restBetweenExercises;
+    this.setup.setsDisplay.value = this.targetSets;
+    this.setup.repsDisplay.value = this.targetReps;
+    this.setup.restSetsInput.value = this.restBetweenSets;
+    this.setup.restExercisesInput.value = this.restBetweenExercises;
+  }
+
   _renderPlanList() {
     const list = this.setup.planList;
     list.innerHTML = '';
 
     if (this.workoutPlan.length === 0) {
-      list.innerHTML = '<p class="plan-empty">No exercises added yet. Configure above and click "+ Add".</p>';
+      list.innerHTML = '<p class="plan-empty">No exercises added yet. Configure a single exercise and click “+ Add to Workout Plan”.</p>';
       this.setup.btnStartPlan.style.display = 'none';
       return;
     }
@@ -359,15 +364,17 @@ class App {
       const ns = this.profiles.namespace(active);
       this.wm.setNamespace(ns);
       this.wpm.setNamespace(ns);
+      this.cloud.setNamespace(ns);
       this.profileIndicator.textContent = `👤 ${active}`;
       this.btnSwitchProfile.style.display = '';
     } else {
       this.wm.setNamespace('');
       this.wpm.setNamespace('');
+      this.cloud.setNamespace('');
       this.profileIndicator.textContent = '';
       this.btnSwitchProfile.style.display = '';
     }
-    this._populatePresets();
+    this._populateExercises();
     this._populatePlanSelect();
     this.workoutPlan = [];
     this._renderPlanList();
@@ -378,7 +385,11 @@ class App {
   _bindSetup() {
     const s = this.setup;
 
-    s.exerciseSelect.addEventListener('change', () => this._updateTips());
+    s.exerciseSelect.addEventListener('change', () => {
+      this.exerciseId = s.exerciseSelect.value;
+      this._loadSelectedExerciseSettings();
+      this._updateTips();
+    });
 
     // Sets / Reps steppers
     s.btnSetsMinus.addEventListener('click', () => {
@@ -434,40 +445,19 @@ class App {
       s.restExercisesInput.value = this.restBetweenExercises;
     });
 
-    // Presets
+    // Update selected exercise profile
     s.btnSavePreset.addEventListener('click', () => {
-      const name = s.presetName.value.trim();
-      if (!name) { s.presetName.focus(); return; }
-      this.wm.save(name, {
+      const exerciseId = s.exerciseSelect.value;
+      this.wm.save(exerciseId, {
         exerciseId: s.exerciseSelect.value,
         sets: this.targetSets,
         reps: this.targetReps,
         restBetweenSets: this.restBetweenSets,
+        restBetweenExercises: this.restBetweenExercises,
       });
-      this._populatePresets();
-      s.presetName.value = '';
-      this._toast('Preset saved!');
-    });
-
-    s.presetSelect.addEventListener('change', () => {
-      const preset = this.wm.get(s.presetSelect.value);
-      if (!preset) return;
-      s.exerciseSelect.value = preset.exerciseId;
-      this.targetSets = preset.sets;
-      this.targetReps = preset.reps;
-      this.restBetweenSets = preset.restBetweenSets ?? DEFAULT_REST_BETWEEN_SETS;
-      s.setsDisplay.value = this.targetSets;
-      s.repsDisplay.value = this.targetReps;
-      s.restSetsInput.value = this.restBetweenSets;
-      this._updateTips();
-    });
-
-    s.btnDeletePreset.addEventListener('click', () => {
-      const name = s.presetSelect.value;
-      if (!name) return;
-      this.wm.delete(name);
-      this._populatePresets();
-      this._toast('Preset deleted');
+      this.cloud.saveSingleExercise(exerciseId, this.wm.get(exerciseId));
+      this._populateExercises();
+      this._toast('Single exercise updated!');
     });
 
     // Preset plan templates
@@ -499,6 +489,7 @@ class App {
       if (!name) { s.planName.focus(); return; }
       if (this.workoutPlan.length === 0) { this._toast('Plan is empty!'); return; }
       this.wpm.save(name, this.workoutPlan);
+      this.cloud.saveWorkoutPlan(name, this.workoutPlan);
       this._populatePlanSelect();
       s.planName.value = '';
       this._toast('Plan saved!');
