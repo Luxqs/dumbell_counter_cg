@@ -107,7 +107,7 @@ class PoseDetector {
 
   async detect(video) {
     if (!this.ready || video.readyState < 2) return null;
-    const poses = await this.detector.estimatePoses(video, { flipHorizontal: false });
+    const poses = await this.detector.estimatePoses(video, { flipHorizontal: true });
     return poses.length > 0 ? poses[0] : null;
   }
 
@@ -175,6 +175,9 @@ class RepCounter {
     this.stage = null; // null | 'rest' | 'peak'
     this.angle = 0;
     this._history = [];
+    this._activeSide = null;
+    this._missingSideFrames = 0;
+    this._repLockUntil = 0;
   }
 
   reset() {
@@ -182,6 +185,9 @@ class RepCounter {
     this.stage = null;
     this.angle = 0;
     this._history = [];
+    this._activeSide = null;
+    this._missingSideFrames = 0;
+    this._repLockUntil = 0;
   }
 
   _calcAngle(a, b, c) {
@@ -199,17 +205,38 @@ class RepCounter {
 
   _bestAngle(pose, detector) {
     const { a, b, c } = this.exercise.joints;
-    let best = null, bestConf = 0;
+    let best = null, bestConf = 0, bestSide = null;
     for (const side of ['left', 'right']) {
       const pa = detector.kp(pose, `${side}_${a}`);
       const pb = detector.kp(pose, `${side}_${b}`);
       const pc = detector.kp(pose, `${side}_${c}`);
       if (!pa || !pb || !pc) continue;
-      const conf = (pa.score + pb.score + pc.score) / 3;
+      let conf = (pa.score + pb.score + pc.score) / 3;
+      if (this._activeSide === side) conf += 0.1;
+
+      if (this.exerciseId === 'tricep-extension') {
+        const elbowAboveShoulder = pb.y <= pa.y + 40;
+        const wristAboveElbow = pc.y <= pb.y + 80;
+        if (!elbowAboveShoulder) conf -= 0.25;
+        if (!wristAboveElbow) conf -= 0.12;
+      }
+
       if (conf > bestConf) {
         bestConf = conf;
         best = this._calcAngle(pa, pb, pc);
+        bestSide = side;
       }
+    }
+    if (bestSide) {
+      if (!this._activeSide || bestSide === this._activeSide || bestConf > 0.78) {
+        this._activeSide = bestSide;
+        this._missingSideFrames = 0;
+      } else {
+        this._missingSideFrames++;
+      }
+    } else {
+      this._missingSideFrames++;
+      if (this._missingSideFrames > 12) this._activeSide = null;
     }
     return best;
   }
@@ -223,13 +250,24 @@ class RepCounter {
 
     const { direction, restThreshold, peakThreshold } = this.exercise.counting;
     let counted = false;
+    const now = performance.now();
 
     if (direction === 'decrease') {
       if (angle > restThreshold)                          this.stage = 'rest';
-      if (angle < peakThreshold && this.stage === 'rest') { this.stage = 'peak'; this.reps++; counted = true; }
+      if (angle < peakThreshold && this.stage === 'rest' && now > this._repLockUntil) {
+        this.stage = 'peak';
+        this.reps++;
+        counted = true;
+        this._repLockUntil = now + 550;
+      }
     } else {
       if (angle < restThreshold)                          this.stage = 'rest';
-      if (angle > peakThreshold && this.stage === 'rest') { this.stage = 'peak'; this.reps++; counted = true; }
+      if (angle > peakThreshold && this.stage === 'rest' && now > this._repLockUntil) {
+        this.stage = 'peak';
+        this.reps++;
+        counted = true;
+        this._repLockUntil = now + 550;
+      }
     }
 
     return { reps: this.reps, angle: this.angle, counted };
@@ -256,10 +294,17 @@ class WorkoutManager {
 
   get(name) { return this._load()[name] || null; }
 
-  save(name, { exerciseId, sets, reps, restBetweenSets }) {
+  save(name, { exerciseId, sets, reps, restBetweenSets, restBetweenExercises }) {
     if (!name.trim()) return false;
     const data = this._load();
-    data[name.trim()] = { exerciseId, sets, reps, restBetweenSets, savedAt: Date.now() };
+    data[name.trim()] = {
+      exerciseId,
+      sets,
+      reps,
+      restBetweenSets,
+      restBetweenExercises,
+      savedAt: Date.now()
+    };
     this._save(data);
     return true;
   }
@@ -303,5 +348,47 @@ class WorkoutPlanManager {
     const data = this._load();
     delete data[name];
     this._save(data);
+  }
+}
+
+// ─── Optional Cloud Sync Manager (best-effort backend persistence) ───────────
+
+class CloudSyncManager {
+  constructor() {
+    this.namespace = '';
+    this.baseUrl =
+      (typeof window !== 'undefined' && window.DC_BACKEND_URL)
+      || localStorage.getItem('dc_backend_url')
+      || '';
+  }
+
+  setNamespace(ns) { this.namespace = ns || ''; }
+
+  _url(path) {
+    if (!this.baseUrl) return null;
+    return `${this.baseUrl.replace(/\/+$/, '')}${path}`;
+  }
+
+  async _post(path, payload) {
+    const url = this._url(path);
+    if (!url) return false;
+    try {
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      return res.ok;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  saveSingleExercise(name, data) {
+    return this._post('/single-exercise/save', { namespace: this.namespace, name, data });
+  }
+
+  saveWorkoutPlan(name, plan) {
+    return this._post('/workout-plan/save', { namespace: this.namespace, name, plan });
   }
 }
